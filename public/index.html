@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>R2Beam</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span>◆</span> R2Beam</a>
+    <div class="account"><span id="user-email"></span><button id="logout" class="text-button">로그아웃</button></div>
+  </header>
+  <main>
+    <section class="page-intro">
+      <h1>R2Beam <span>- My Media Vault</span></h1>
+      <p>파일을 올리면 R2에 저장하고 공개 링크를 생성합니다.</p>
+    </section>
+    <fieldset class="storage-options">
+      <legend>저장 방식</legend>
+      <label><input type="radio" name="storage-mode" value="both" checked><span><strong>원본 + 게시판용</strong><small>경량 링크를 기본 복사하고 원본도 함께 보관</small></span></label>
+      <label><input type="radio" name="storage-mode" value="optimized"><span><strong>게시판용만</strong><small>용량과 개인정보 노출을 최소화</small></span></label>
+      <label><input type="radio" name="storage-mode" value="original"><span><strong>원본만</strong><small>아무 변환 없이 그대로 저장</small></span></label>
+      <p>MP3와 움직이는 이미지는 항상 원본으로 저장됩니다. 영상 변환은 기기 성능에 따라 수분이 걸릴 수 있습니다.</p>
+    </fieldset>
+    <section id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="미디어 업로드">
+      <input id="file-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,audio/mpeg,video/mp4,.mp3,.mp4" multiple hidden>
+      <div class="upload-icon">↥</div><strong>이미지·MP3·MP4를 드롭하세요</strong><span>이미지는 즉시, 영상 변환기는 필요할 때만 불러옵니다</span>
+    </section>
+    <section id="progress" class="progress" hidden></section>
+    <section class="library-head">
+      <div><p class="eyebrow">LIBRARY</p><h2>최근 미디어</h2></div><button id="refresh" class="icon-button" title="새로고침">↻</button>
+    </section>
+    <div id="empty" class="empty" hidden>아직 업로드한 미디어가 없습니다.</div>
+    <section id="gallery" class="gallery" aria-live="polite"></section>
+    <button id="load-more" class="load-more" hidden>더 불러오기</button>
+  </main>
+  <footer class="site-footer"><a href="https://github.com/xguru/R2Beam" target="_blank" rel="noopener noreferrer">GitHub · Source Code ↗</a></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

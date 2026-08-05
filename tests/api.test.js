@@ -1,0 +1,48 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import worker from "../src/index.js";
+
+function object(key) {
+  return {
+    key,
+    size: 123,
+    uploaded: new Date("2026-08-05T00:00:00Z"),
+    httpMetadata: { contentType: "image/webp" },
+    customMetadata: {}
+  };
+}
+
+test("hides installer assets from the media library and continues pagination", async () => {
+  const calls = [];
+  const pages = [
+    { objects: [object("_r2beam/assets/index.html")], truncated: true, cursor: "next" },
+    { objects: [object("image/2026/08/photo.webp")], truncated: false }
+  ];
+  const media = {
+    put() {}, get() {}, delete() {},
+    async list(options) {
+      calls.push(options);
+      return pages.shift();
+    }
+  };
+
+  const response = await worker.fetch(new Request("http://localhost:8787/api/media?limit=1"), {
+    MEDIA: media,
+    DEV_AUTH_BYPASS: "true"
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.items.map((item) => item.key), ["image/2026/08/photo.webp"]);
+  assert.equal(body.truncated, false);
+  assert.equal(body.cursor, null);
+  assert.deepEqual(calls.map((call) => call.cursor), [undefined, "next"]);
+});
+
+test("does not expose the removed setup routes", async () => {
+  const env = { DEV_AUTH_BYPASS: "true" };
+  for (const path of ["/setup", "/setup.html", "/setup.js", "/setup.css", "/api/setup"]) {
+    const response = await worker.fetch(new Request(`http://localhost:8787${path}`), env);
+    assert.equal(response.status, 404, path);
+  }
+});
