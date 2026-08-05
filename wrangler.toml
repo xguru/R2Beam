@@ -1,0 +1,17 @@
+name = "r2beam"
+main = "src/index.js"
+compatibility_date = "2026-08-05"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+html_handling = "none"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "r2beam-media"
+
+[observability]
+enabled = true

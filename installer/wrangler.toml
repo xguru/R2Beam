@@ -1,0 +1,25 @@
+name = "r2beam-installer"
+main = "src/index.js"
+compatibility_date = "2026-08-05"
+
+[[routes]]
+pattern = "r2beam.xguru.net"
+custom_domain = true
+
+[assets]
+directory = "./release"
+binding = "RELEASES"
+run_worker_first = true
+
+[[kv_namespaces]]
+binding = "INSTALL_SESSIONS"
+id = "41f2cb0b639644278db92d54f652eacd"
+
+[vars]
+OAUTH_CLIENT_ID = "bdc499d624c6bb3c533b16dbed2e6fa5"
+OAUTH_REDIRECT_URI = "https://r2beam.xguru.net/oauth/callback"
+OAUTH_SCOPES = "workers-r2.write workers-scripts.write access.write zone-access.write access-acct.write account-settings.read user-details.read zone.read"
+R2BEAM_VERSION = "0.1.0"
+
+[observability]
+enabled = true

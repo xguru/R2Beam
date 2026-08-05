@@ -1,0 +1,2 @@
+# localhost에서만 작동합니다. 프로덕션 호스트에서는 무시됩니다.
+DEV_AUTH_BYPASS=true

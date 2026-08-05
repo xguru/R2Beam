@@ -1,0 +1,70 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0c0f;
+  --panel: #12151a;
+  --line: #282d35;
+  --muted: #919aa9;
+  --accent: #d7ff64;
+  --danger: #ff7a7a;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: #f5f7fa; min-height: 100vh; }
+button { font: inherit; }
+.topbar { height: 68px; padding: 0 max(24px, calc((100vw - 1160px) / 2)); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.brand { display: flex; gap: 10px; align-items: center; color: inherit; text-decoration: none; font-size: 14px; font-weight: 750; letter-spacing: .04em; }
+.brand span { color: var(--accent); }
+.account { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 13px; }
+.text-button, .icon-button { border: 0; background: transparent; color: inherit; cursor: pointer; }
+.text-button:hover { color: white; }
+main { width: min(1160px, calc(100% - 48px)); margin: 0 auto; padding: 72px 0 100px; }
+.page-intro { margin-bottom: 38px; }
+.page-intro h1 { margin: 0; font-size: 22px; letter-spacing: -.025em; }
+.page-intro h1 span { color: var(--muted); font-weight: 500; }
+.page-intro p { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+.eyebrow { margin: 0 0 13px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+.storage-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 18px; padding: 0; border: 0; }
+.storage-options legend { margin-bottom: 10px; color: var(--muted); font-size: 12px; font-weight: 750; }
+.storage-options label { display: flex; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel); cursor: pointer; }
+.storage-options label:has(input:checked) { border-color: var(--accent); background: #192019; }
+.storage-options input { margin: 3px 0 0; accent-color: var(--accent); }
+.storage-options span { display: grid; gap: 4px; }
+.storage-options strong { font-size: 13px; }
+.storage-options small, .storage-options > p { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.storage-options > p { grid-column: 1 / -1; margin: 0 2px 8px; }
+.dropzone { min-height: 260px; padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed #454c58; border-radius: 22px; background: linear-gradient(135deg, #14181e, #101318); cursor: pointer; transition: .2s ease; outline: none; }
+.dropzone:hover, .dropzone:focus, .dropzone.dragging { border-color: var(--accent); background: #161b1d; transform: translateY(-2px); }
+.upload-icon { width: 54px; height: 54px; display: grid; place-items: center; margin-bottom: 21px; border-radius: 50%; background: var(--accent); color: #111; font-size: 29px; font-weight: 800; }
+.dropzone strong { font-size: 18px; }
+.dropzone span { margin-top: 8px; color: var(--muted); font-size: 13px; }
+.progress { margin-top: 16px; padding: 15px 18px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; }
+.library-head { display: flex; align-items: end; justify-content: space-between; margin: 72px 0 22px; }
+h2 { margin: 0; font-size: 28px; letter-spacing: -.04em; }
+.icon-button { width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 50%; font-size: 22px; }
+.icon-button:hover { border-color: #666f7d; }
+.gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.card { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); }
+.media-preview { aspect-ratio: 1; width: 100%; background: #20242a; }
+.thumb { display: block; object-fit: cover; }
+.video-preview { display: block; object-fit: contain; background: #08090b; }
+.audio-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 18px; background: radial-gradient(circle at 50% 35%, #303a27, #15191c 68%); }
+.audio-preview audio { width: 100%; height: 42px; }
+.media-icon { display: grid; width: 74px; height: 74px; place-items: center; border-radius: 50%; background: var(--accent); color: #10130a; font-size: 34px; font-weight: 800; }
+.card-info { padding: 13px; }
+.filename { overflow: hidden; margin-bottom: 5px; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 700; }
+.meta { color: var(--muted); font-size: 11px; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.actions button { min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #191d23; color: #dce1e8; cursor: pointer; font-size: 11px; }
+.actions button:not(.delete) { flex: 1 1 auto; }
+.actions button:hover { border-color: #626b79; }
+.actions .delete { color: var(--danger); }
+.empty { padding: 80px 20px; border: 1px solid var(--line); border-radius: 16px; color: var(--muted); text-align: center; }
+.load-more { display: block; margin: 28px auto 0; padding: 11px 20px; border: 1px solid var(--line); border-radius: 99px; background: var(--panel); color: white; cursor: pointer; }
+.load-more[hidden] { display: none; }
+.site-footer { width: min(1160px, calc(100% - 48px)); margin: -52px auto 0; padding: 0 0 48px; text-align: center; }
+.site-footer a { color: var(--muted); text-decoration: none; font-size: 12px; }
+.site-footer a:hover { color: var(--accent); }
+.toast { position: fixed; right: 24px; bottom: 24px; max-width: min(380px, calc(100% - 48px)); padding: 13px 17px; border-radius: 10px; background: var(--accent); color: #10130a; font-size: 13px; font-weight: 750; opacity: 0; pointer-events: none; transform: translateY(10px); transition: .2s; }
+.toast.show { opacity: 1; transform: translateY(0); }
+@media (max-width: 850px) { .gallery { grid-template-columns: repeat(2, 1fr); } .storage-options { grid-template-columns: 1fr; } .storage-options > p { grid-column: 1; } }
+@media (max-width: 520px) { main { width: min(100% - 28px, 1160px); padding-top: 44px; } .topbar { padding: 0 14px; } #user-email { display: none; } .gallery { grid-template-columns: 1fr; } .dropzone { min-height: 220px; } }
