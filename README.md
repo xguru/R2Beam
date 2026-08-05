@@ -8,6 +8,8 @@ R2Beam은 자신의 Cloudflare 계정에 설치하는 개인 미디어 저장소
 이미지와 영상을 브라우저에서 게시판용으로 가볍게 변환하고, Cloudflare R2에 저장한 뒤
 어디서나 사용할 수 있는 공개 링크를 만들어줍니다.
 
+![R2Beam 미디어 볼트 화면](docs/assets/r2beam-screenshot.webp)
+
 - 관리자 화면과 API는 Cloudflare Access 로그인으로 보호
 - 생성된 `/media/*` 링크만 공개
 - 원본만 / 최적화본만 / 둘 다 보관 선택
