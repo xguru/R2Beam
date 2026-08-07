@@ -2,9 +2,10 @@ const API_BASE = "https://api.cloudflare.com/client/v4";
 const ASSET_PREFIX = "_r2beam/assets";
 
 export class CloudflareError extends Error {
-  constructor(message, status = 502) {
+  constructor(message, status = 502, code = null) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -22,8 +23,10 @@ export function client(accessToken, fetchImpl = fetch) {
     if (options.allowMissing && response.status === 404) return null;
     if (options.allowNotEnabled && data?.errors?.some((item) => item.message?.includes("access.api.error.not_enabled"))) return null;
     if (!response.ok || !data?.success) {
-      const message = data?.errors?.map((item) => `${item.code ? `${item.code}: ` : ""}${item.message || ""}`).filter(Boolean).join(" · ");
-      throw new CloudflareError(`${path}: ${message || `Cloudflare API 요청이 실패했습니다. (${response.status})`}`, response.status === 401 || response.status === 403 ? 403 : 502);
+      const errors = Array.isArray(data?.errors) ? data.errors : [];
+      const message = errors.map((item) => `${item.code ? `${item.code}: ` : ""}${item.message || ""}`).filter(Boolean).join(" · ");
+      const code = errors.find((item) => item.code != null)?.code ?? null;
+      throw new CloudflareError(`${path}: ${message || `Cloudflare API 요청이 실패했습니다. (${response.status})`}`, response.status === 401 || response.status === 403 ? 403 : 502, code);
     }
     return data.result;
   };
@@ -190,7 +193,7 @@ export async function installR2Beam({ accessToken, accountId, ownerEmail, worker
     try {
       return await action();
     } catch (error) {
-      throw new CloudflareError(`${label}: ${error.message || error}`, error.status || 502);
+      throw new CloudflareError(`${label}: ${error.message || error}`, error.status || 502, error.code ?? null);
     }
   };
   const bucket = await step("R2 버킷 준비", () => ensureBucket(api, accountId, bucketName));

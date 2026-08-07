@@ -19,13 +19,20 @@ R2Beam은 자신의 Cloudflare 계정에 설치하는 개인 미디어 저장소
 
 ## 설치
 
+설치 전에 Cloudflare Dashboard의 **Storage & databases → R2 → Overview**에서
+R2 구독을 활성화해야 합니다. R2에는 무료 월간 사용량이 포함되지만 새 계정은 최초
+한 번 체크아웃을 완료해야 합니다. [R2 활성화 화면](https://dash.cloudflare.com/?to=%2F%3Aaccount%2Fr2%2Foverview)
+에서 진행할 수 있습니다.
+
 1. 위의 **Install R2Beam** 버튼을 눌러 설치 도우미를 실행합니다.
 2. Cloudflare에 로그인하고 설치할 계정과 요청 권한을 확인합니다.
 3. 필요하면 자신의 Cloudflare Zone에 속한 커스텀 도메인을 입력합니다.
-4. 설치가 끝나면 **내 미디어 볼트 열기**를 누릅니다.
+4. 설치기가 R2 비활성 상태를 안내하면 Dashboard에서 활성화한 뒤 **활성화했습니다 · 다시 시도**를 누릅니다.
+5. 설치가 끝나면 **내 미디어 볼트 열기**를 누릅니다.
 
-Cloudflare 계정만 있으면 됩니다. Account ID, API Token, Google·GitHub OAuth 설정을
-따로 준비할 필요가 없습니다. 설치 도우미가 다음 항목을 자동으로 구성합니다.
+별도 서버 없이 Cloudflare 계정과 활성화된 R2 구독만 있으면 됩니다. Account ID,
+API Token, Google·GitHub OAuth 설정을 따로 준비할 필요가 없습니다. 설치 도우미가
+다음 항목을 자동으로 구성합니다.
 
 - 미디어를 저장할 전용 R2 버킷과 Worker 생성
 - 설치한 계정만 들어올 수 있는 Cloudflare Access 로그인 구성
@@ -37,6 +44,10 @@ Cloudflare 계정만 있으면 됩니다. Account ID, API Token, Google·GitHub 
 이미 로그인 방식이 있는 계정은 기존 설정을 유지하고, 아무것도 설정하지 않은
 계정에는 Cloudflare 계정 로그인을 자동으로 추가합니다. OAuth 접근 권한은 설치
 완료 직후 폐기되며 설치 도우미는 R2Beam 설치에만 사용됩니다.
+
+R2가 아직 활성화되지 않은 계정에서 Cloudflare 오류 `10042`가 반환되면 설치기는
+원문 오류 대신 활성화 안내를 표시합니다. R2를 활성화한 뒤 같은 화면에서 재시도하면
+기존 OAuth 설치 세션과 입력값을 유지한 채 R2 버킷 준비 단계부터 다시 진행합니다.
 
 커스텀 도메인은 선택 사항입니다. 비워두면 `<worker>.<account>.workers.dev` 주소를
 사용합니다. 입력한 도메인의 활성 Cloudflare Zone이 설치 대상 계정에 있어야 하며,
