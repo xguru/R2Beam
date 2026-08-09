@@ -69,6 +69,72 @@ function targetImageSize(width, height) {
   };
 }
 
+async function loadImageSource(file) {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      return { source: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close?.() };
+    } catch {
+      try {
+        const bitmap = await createImageBitmap(file);
+        return { source: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close?.() };
+      } catch {
+        // iOS Safari can decode an image element even when createImageBitmap fails.
+      }
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.decoding = "async";
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error("이 브라우저에서 이미지를 읽을 수 없습니다."));
+      image.src = objectUrl;
+    });
+    return {
+      source: image,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      close: () => URL.revokeObjectURL(objectUrl)
+    };
+  } catch (error) {
+    URL.revokeObjectURL(objectUrl);
+    throw error;
+  }
+}
+
+function canvasBlob(canvas, type, quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+function canvasHasTransparency(context, width, height) {
+  try {
+    const pixels = context.getImageData(0, 0, width, height).data;
+    for (let index = 3; index < pixels.length; index += 4) {
+      if (pixels[index] !== 255) return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+async function encodeBoardImage(canvas, context, file) {
+  const webp = await canvasBlob(canvas, "image/webp", IMAGE_WEBP_QUALITY).catch(() => null);
+  if (webp?.type === "image/webp") return { blob: webp, type: "image/webp", extension: "webp" };
+
+  const sourceType = String(file.type || "").toLowerCase();
+  const preserveAlpha = sourceType !== "image/jpeg"
+    && canvasHasTransparency(context, canvas.width, canvas.height);
+  const type = preserveAlpha ? "image/png" : "image/jpeg";
+  const extension = preserveAlpha ? "png" : "jpg";
+  const fallback = await canvasBlob(canvas, type, preserveAlpha ? undefined : IMAGE_WEBP_QUALITY);
+  if (!fallback || fallback.type !== type) throw new Error("이 브라우저에서 이미지를 최적화할 수 없습니다.");
+  return { blob: fallback, type, extension };
+}
+
 async function isAnimatedImage(file) {
   const type = String(file.type || "").toLowerCase();
   const name = String(file.name || "").toLowerCase();
@@ -85,10 +151,10 @@ async function convertImageForBoard(file) {
     throw new Error("움직이는 이미지는 애니메이션 보존을 위해 원본으로 저장합니다.");
   }
 
-  let bitmap;
+  let decoded;
   try {
-    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-    const size = targetImageSize(bitmap.width, bitmap.height);
+    decoded = await loadImageSource(file);
+    const size = targetImageSize(decoded.width, decoded.height);
     const canvas = document.createElement("canvas");
     canvas.width = size.width;
     canvas.height = size.height;
@@ -96,23 +162,16 @@ async function convertImageForBoard(file) {
     if (!context) throw new Error("이미지 변환기를 시작할 수 없습니다.");
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
-    context.drawImage(bitmap, 0, 0, size.width, size.height);
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(
-        (result) => result ? resolve(result) : reject(new Error("WebP 변환에 실패했습니다.")),
-        "image/webp",
-        IMAGE_WEBP_QUALITY
-      );
-    });
-    if (blob.type !== "image/webp") throw new Error("이 브라우저는 WebP 변환을 지원하지 않습니다.");
-    return new File([blob], filenameWithExtension(file.name, "webp"), {
-      type: "image/webp",
+    context.drawImage(decoded.source, 0, 0, size.width, size.height);
+    const output = await encodeBoardImage(canvas, context, file);
+    return new File([output.blob], filenameWithExtension(file.name, output.extension), {
+      type: output.type,
       lastModified: file.lastModified
     });
   } catch (error) {
-    throw new Error(`${file.name}: ${error.message || "WebP 변환에 실패했습니다."}`);
+    throw new Error(`${file.name}: ${error.message || "이미지 최적화에 실패했습니다."}`);
   } finally {
-    bitmap?.close?.();
+    decoded?.close?.();
   }
 }
 
