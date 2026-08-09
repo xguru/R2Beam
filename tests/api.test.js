@@ -46,3 +46,12 @@ test("does not expose the removed setup routes", async () => {
     assert.equal(response.status, 404, path);
   }
 });
+
+test("reports the installed R2Beam version", async () => {
+  const response = await worker.fetch(new Request("http://localhost:8787/api/media/me"), {
+    DEV_AUTH_BYPASS: "true",
+    R2BEAM_VERSION: "0.1.1"
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).version, "0.1.1");
+});

@@ -57,13 +57,14 @@ async function uploadReleaseAssets(api, accountId, bucketName, release, releases
   }
 }
 
-async function uploadWorker(api, accountId, workerName, bucketName, bundle) {
+async function uploadWorker(api, accountId, workerName, bucketName, bundle, version) {
   const form = new FormData();
   form.set("metadata", new Blob([JSON.stringify({
     main_module: "worker.js",
     compatibility_date: "2026-08-05",
     bindings: [
-      { type: "r2_bucket", name: "MEDIA", bucket_name: bucketName }
+      { type: "r2_bucket", name: "MEDIA", bucket_name: bucketName },
+      { type: "plain_text", name: "R2BEAM_VERSION", text: version }
     ],
     observability: { enabled: true }
   })], { type: "application/json" }), "metadata.json");
@@ -73,6 +74,38 @@ async function uploadWorker(api, accountId, workerName, bucketName, bundle) {
     method: "POST",
     ...jsonBody({ enabled: true, previews_enabled: false })
   });
+}
+
+export async function findExistingR2Beam({ accessToken, accountId, fetchImpl = fetch }) {
+  const api = client(accessToken, fetchImpl);
+  const [scripts, domains] = await Promise.all([
+    api(`/accounts/${accountId}/workers/scripts`),
+    api(`/accounts/${accountId}/workers/domains`)
+  ]);
+  const defaultName = `r2beam-${accountId.slice(0, 6)}`;
+  const candidates = scripts
+    .filter((script) => script.id)
+    .sort((a, b) => {
+      const rank = (script) => script.id === defaultName ? 2 : /^r2beam(?:-|$)/i.test(script.id) ? 1 : 0;
+      return rank(b) - rank(a);
+    });
+
+  for (const script of candidates) {
+    const settings = await api(`/accounts/${accountId}/workers/scripts/${encodeURIComponent(script.id)}/settings`);
+    const bindings = Array.isArray(settings?.bindings) ? settings.bindings : [];
+    const media = bindings.find((binding) => binding.type === "r2_bucket" && binding.name === "MEDIA" && binding.bucket_name);
+    const hasAccessBindings = ["TEAM_DOMAIN", "POLICY_AUD"].every((name) => bindings.some((binding) => binding.name === name));
+    if (!media || !hasAccessBindings) continue;
+    const version = bindings.find((binding) => binding.type === "plain_text" && binding.name === "R2BEAM_VERSION")?.text || null;
+    const customDomain = domains.find((domain) => domain.service === script.id);
+    return {
+      workerName: script.id,
+      bucketName: media.bucket_name,
+      customHostname: customDomain?.hostname || "",
+      version
+    };
+  }
+  return null;
 }
 
 function policy(name, decision, email) {
@@ -198,7 +231,7 @@ export async function installR2Beam({ accessToken, accountId, ownerEmail, worker
   };
   const bucket = await step("R2 버킷 준비", () => ensureBucket(api, accountId, bucketName));
   await step("릴리스 파일 업로드", () => uploadReleaseAssets(api, accountId, bucketName, release, releases));
-  await step("Worker 배포", () => uploadWorker(api, accountId, workerName, bucketName, bundle));
+  await step("Worker 배포", () => uploadWorker(api, accountId, workerName, bucketName, bundle, release.version));
   await step("커스텀 도메인 설정", () => ensureCustomDomain(api, accountId, workerName, customDomain));
   const url = await step("Access 설정", () => configureAccess(api, accountId, workerName, ownerEmail, customDomain));
   const accessReady = await waitForAccessProtection(url, fetchImpl, sleep);

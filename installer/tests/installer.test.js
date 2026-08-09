@@ -4,7 +4,7 @@ import worker, { customDomainFor, isR2NotEnabledError } from "../src/index.js";
 import { CloudflareError } from "../src/cloudflare.js";
 
 test("renders the public installer landing page", async () => {
-  const response = await worker.fetch(new Request("https://r2beam.xguru.net/"), { OAUTH_CLIENT_ID: "client", OAUTH_CLIENT_SECRET: "secret" });
+  const response = await worker.fetch(new Request("https://r2beam.xguru.net/"), { OAUTH_CLIENT_ID: "client", OAUTH_CLIENT_SECRET: "secret", R2BEAM_VERSION: "0.1.1" });
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Cloudflare로 설치/);
@@ -19,11 +19,64 @@ test("renders the public installer landing page", async () => {
   assert.match(html, /R2 활성화하기/);
   assert.match(html, /https:\/\/github\.com\/xguru\/R2Beam/);
   assert.match(html, /GitHub · xguru\/R2Beam/);
+  assert.match(html, /R2Beam v0\.1\.1/);
 });
 
 test("recognizes the Cloudflare R2 subscription error", () => {
   assert.equal(isR2NotEnabledError(new CloudflareError("R2 버킷 준비: Please enable R2 through the Cloudflare Dashboard.", 502, 10042)), true);
   assert.equal(isR2NotEnabledError(new CloudflareError("다른 오류", 502, 99999)), false);
+});
+
+test("reuses an existing installation and renders an upgrade notice", async () => {
+  const originalFetch = globalThis.fetch;
+  const accountId = "86728b78f3db89ba85b7ede8a6ff8567";
+  globalThis.fetch = async (url) => {
+    const path = new URL(url).pathname.replace("/client/v4", "");
+    const result = path.endsWith("/workers/scripts")
+      ? [{ id: "r2beam-86728b" }]
+      : path.endsWith("/workers/domains")
+        ? [{ service: "r2beam-86728b", hostname: "r2.example.com" }]
+        : path.endsWith("/workers/scripts/r2beam-86728b/settings")
+          ? { bindings: [
+              { type: "r2_bucket", name: "MEDIA", bucket_name: "r2beam-media-86728b" },
+              { type: "plain_text", name: "R2BEAM_VERSION", text: "0.1.0" },
+              { type: "secret_text", name: "TEAM_DOMAIN" },
+              { type: "secret_text", name: "POLICY_AUD" }
+            ] }
+          : null;
+    if (result === null) throw new Error(`Unexpected GET ${path}`);
+    return Response.json({ success: true, result, errors: [] });
+  };
+  const env = {
+    R2BEAM_VERSION: "0.1.1",
+    INSTALL_SESSIONS: {
+      async get(key) {
+        assert.equal(key, "install:session-id");
+        return {
+          accessToken: "oauth-token",
+          email: "owner@example.com",
+          accounts: [{ id: accountId, name: "Owner" }],
+          zones: [{ id: "zone", name: "example.com", accountId }]
+        };
+      }
+    }
+  };
+  try {
+    const response = await worker.fetch(new Request("https://r2beam.xguru.net/configure", {
+      headers: { cookie: "r2beam_install=session-id" }
+    }), env);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, /기존 R2Beam을 찾았습니다/);
+    assert.match(html, /v0\.1\.0에서 v0\.1\.1으로 업그레이드/);
+    assert.match(html, /저장된 미디어와 공개 링크는 그대로 유지됩니다/);
+    assert.match(html, /name="workerName" value="r2beam-86728b"/);
+    assert.match(html, /name="bucketName" value="r2beam-media-86728b"/);
+    assert.match(html, /name="customHostname" value="r2\.example\.com"/);
+    assert.match(html, /R2Beam 0\.1\.1으로 업그레이드/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("keeps the install session and offers an in-place retry when R2 is disabled", async () => {
@@ -87,6 +140,7 @@ test("keeps the install session and offers an in-place retry when R2 is disabled
     assert.match(html, /활성화했습니다 · 다시 시도/);
     assert.match(html, /name="accountId" value="86728b78f3db89ba85b7ede8a6ff8567"/);
     assert.match(html, /name="bucketName" value="r2beam-media-86728b"/);
+    assert.match(html, /name="operation" value="install"/);
     assert.doesNotMatch(html, /10042|Please enable R2/);
     assert.equal(sessionDeleted, false);
   } finally {

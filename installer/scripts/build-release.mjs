@@ -7,6 +7,7 @@ const projectRoot = resolve(installerRoot, "..");
 const releaseRoot = join(installerRoot, "release");
 const filesRoot = join(releaseRoot, "files");
 const bundleRoot = join(releaseRoot, ".bundle");
+const project = JSON.parse(await readFile(join(projectRoot, "package.json"), "utf8"));
 
 const types = {
   ".css": "text/css; charset=utf-8",
@@ -53,6 +54,6 @@ for (const source of sourceFiles) {
 }
 
 await cp(join(bundleRoot, "index.js"), join(releaseRoot, "r2beam-worker.js"));
-await writeFile(join(releaseRoot, "manifest.json"), JSON.stringify({ version: "0.1.0", assets: manifest }, null, 2));
+await writeFile(join(releaseRoot, "manifest.json"), JSON.stringify({ version: project.version, assets: manifest }, null, 2));
 await rm(bundleRoot, { recursive: true, force: true });
 console.log(`Prepared R2Beam release with ${manifest.length} assets.`);

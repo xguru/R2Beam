@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { installR2Beam } from "../src/cloudflare.js";
+import { findExistingR2Beam, installR2Beam } from "../src/cloudflare.js";
 
 function envelope(result, status = 200) {
   return new Response(JSON.stringify({ success: status >= 200 && status < 300, result, errors: [] }), { status, headers: { "content-type": "application/json" } });
@@ -48,7 +48,7 @@ test("installs assets, worker, Access policies, and secrets in the selected acco
   const releases = {
     async fetch(request) {
       const path = new URL(request.url).pathname;
-      if (path === "/manifest.json") return Response.json({ version: "0.1.0", assets: [{ path: "/index.html", source: "/files/index.html", contentType: "text/html" }] });
+      if (path === "/manifest.json") return Response.json({ version: "0.1.1", assets: [{ path: "/index.html", source: "/files/index.html", contentType: "text/html" }] });
       if (path === "/r2beam-worker.js") return new Response("export default { fetch() {} }");
       if (path === "/files/index.html") return new Response("<h1>R2Beam</h1>");
       return new Response(null, { status: 404 });
@@ -96,7 +96,8 @@ test("installs assets, worker, Access policies, and secrets in the selected acco
   assert.ok(upload.body instanceof FormData);
   const metadata = JSON.parse(await upload.body.get("metadata").text());
   assert.deepEqual(metadata.bindings, [
-    { type: "r2_bucket", name: "MEDIA", bucket_name: "r2beam-media-012345" }
+    { type: "r2_bucket", name: "MEDIA", bucket_name: "r2beam-media-012345" },
+    { type: "plain_text", name: "R2BEAM_VERSION", text: "0.1.1" }
   ]);
   const secretBodies = calls.filter((call) => call.path.endsWith("/secrets")).map((call) => JSON.parse(call.body));
   assert.deepEqual(secretBodies.map((item) => item.name), ["TEAM_DOMAIN", "POLICY_AUD"]);
@@ -130,7 +131,7 @@ test("reuses an existing Access login method", async () => {
   const releases = {
     async fetch(request) {
       const path = new URL(request.url).pathname;
-      if (path === "/manifest.json") return Response.json({ version: "0.1.0", assets: [] });
+      if (path === "/manifest.json") return Response.json({ version: "0.1.1", assets: [] });
       if (path === "/r2beam-worker.js") return new Response("export default { fetch() {} }");
       return new Response(null, { status: 404 });
     }
@@ -147,4 +148,33 @@ test("reuses an existing Access login method", async () => {
   });
 
   assert.equal(calls.filter((call) => call.path.endsWith("/access/identity_providers") && call.method === "POST").length, 0);
+});
+
+test("finds an existing R2Beam worker, bucket, version, and custom domain", async () => {
+  const accountId = "0123456789abcdef0123456789abcdef";
+  const fetchImpl = async (url) => {
+    const path = new URL(url).pathname.replace("/client/v4", "");
+    if (path.endsWith("/workers/scripts")) {
+      return envelope([{ id: "another-worker" }, { id: "r2beam-012345" }]);
+    }
+    if (path.endsWith("/workers/domains")) {
+      return envelope([{ service: "r2beam-012345", hostname: "vault.example.com" }]);
+    }
+    if (path.endsWith("/workers/scripts/r2beam-012345/settings")) {
+      return envelope({ bindings: [
+        { type: "r2_bucket", name: "MEDIA", bucket_name: "r2beam-media-012345" },
+        { type: "plain_text", name: "R2BEAM_VERSION", text: "0.1.0" },
+        { type: "secret_text", name: "TEAM_DOMAIN" },
+        { type: "secret_text", name: "POLICY_AUD" }
+      ] });
+    }
+    throw new Error(`Unexpected GET ${path}`);
+  };
+
+  assert.deepEqual(await findExistingR2Beam({ accessToken: "oauth-token", accountId, fetchImpl }), {
+    workerName: "r2beam-012345",
+    bucketName: "r2beam-media-012345",
+    customHostname: "vault.example.com",
+    version: "0.1.0"
+  });
 });

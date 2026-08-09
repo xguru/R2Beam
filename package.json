@@ -1,6 +1,6 @@
 {
   "name": "r2beam",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "A self-hosted media vault on Cloudflare R2",

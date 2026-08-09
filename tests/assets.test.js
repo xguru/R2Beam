@@ -29,4 +29,5 @@ test("links the installed vault to the public source repository", async () => {
   const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
   assert.match(html, /https:\/\/github\.com\/xguru\/R2Beam/);
   assert.match(html, /GitHub · Source Code/);
+  assert.match(html, /id="app-version"/);
 });

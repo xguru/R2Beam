@@ -131,7 +131,9 @@ async function serveMedia(env, request, key) {
 }
 
 async function handleApi(env, request, path, identity) {
-  if (request.method === "GET" && path === "/api/media/me") return json({ authenticated: true, user: identity });
+  if (request.method === "GET" && path === "/api/media/me") {
+    return json({ authenticated: true, user: identity, version: String(env.R2BEAM_VERSION || "dev") });
+  }
   if (request.method !== "GET" && !sameOrigin(request)) return error("invalid_origin", "잘못된 요청 출처입니다.", 403);
   if (request.method === "GET" && path === "/api/media") return listMedia(env, request);
   if (request.method === "POST" && path === "/api/media/upload") return uploadMedia(env, request);

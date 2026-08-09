@@ -62,7 +62,8 @@ h2 { margin: 0; font-size: 28px; letter-spacing: -.04em; }
 .load-more { display: block; margin: 28px auto 0; padding: 11px 20px; border: 1px solid var(--line); border-radius: 99px; background: var(--panel); color: white; cursor: pointer; }
 .load-more[hidden] { display: none; }
 .site-footer { width: min(1160px, calc(100% - 48px)); margin: -52px auto 0; padding: 0 0 48px; text-align: center; }
-.site-footer a { color: var(--muted); text-decoration: none; font-size: 12px; }
+.site-footer a, .site-footer span { color: var(--muted); text-decoration: none; font-size: 12px; }
+.site-footer span::before { content: " · "; }
 .site-footer a:hover { color: var(--accent); }
 .toast { position: fixed; right: 24px; bottom: 24px; max-width: min(380px, calc(100% - 48px)); padding: 13px 17px; border-radius: 10px; background: var(--accent); color: #10130a; font-size: 13px; font-weight: 750; opacity: 0; pointer-events: none; transform: translateY(10px); transition: .2s; }
 .toast.show { opacity: 1; transform: translateY(0); }

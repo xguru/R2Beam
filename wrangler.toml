@@ -13,5 +13,8 @@ html_handling = "none"
 binding = "MEDIA"
 bucket_name = "r2beam-media"
 
+[vars]
+R2BEAM_VERSION = "0.1.1"
+
 [observability]
 enabled = true

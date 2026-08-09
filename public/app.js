@@ -489,6 +489,7 @@ async function boot() {
   const me = await api("/api/media/me");
   if (!me.authenticated) return location.replace("/");
   $("#user-email").textContent = me.user.email;
+  $("#app-version").textContent = `R2Beam v${me.version || "dev"}`;
   initializeStorageMode();
   await loadMedia();
 }
