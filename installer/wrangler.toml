@@ -19,7 +19,8 @@ id = "41f2cb0b639644278db92d54f652eacd"
 OAUTH_CLIENT_ID = "bdc499d624c6bb3c533b16dbed2e6fa5"
 OAUTH_REDIRECT_URI = "https://r2beam.xguru.net/oauth/callback"
 OAUTH_SCOPES = "workers-r2.write workers-scripts.write access.write zone-access.write access-acct.write account-settings.read user-details.read zone.read"
-R2BEAM_VERSION = "0.1.2"
+R2BEAM_VERSION = "0.1.3"
+R2BEAM_MINIMUM_VERSION = "0.1.3"
 
 [observability]
 enabled = true

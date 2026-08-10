@@ -30,4 +30,6 @@ test("links the installed vault to the public source repository", async () => {
   assert.match(html, /https:\/\/github\.com\/xguru\/R2Beam/);
   assert.match(html, /GitHub · Source Code/);
   assert.match(html, /id="app-version"/);
+  assert.match(html, /id="update-notice"/);
+  assert.match(html, /id="required-update"/);
 });

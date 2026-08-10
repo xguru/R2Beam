@@ -12,6 +12,7 @@ import { ASSET_PREFIX, serveAsset } from "./assets.js";
 
 const GROUP_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const REMOVED_SETUP_PATHS = new Set(["/setup", "/setup.html", "/setup.js", "/setup.css", "/api/setup"]);
+const VERSION_POLICY_URL = "https://r2beam.xguru.net/version.json";
 function json(value, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(value), {
     status,
@@ -133,6 +134,13 @@ async function serveMedia(env, request, key) {
 async function handleApi(env, request, path, identity) {
   if (request.method === "GET" && path === "/api/media/me") {
     return json({ authenticated: true, user: identity, version: String(env.R2BEAM_VERSION || "dev") });
+  }
+  if (request.method === "GET" && path === "/api/media/version") {
+    const response = await fetch(VERSION_POLICY_URL, { headers: { accept: "application/json" } }).catch(() => null);
+    if (!response?.ok) return error("version_check_failed", "최신 버전을 확인하지 못했습니다.", 502);
+    const policy = await response.json().catch(() => null);
+    if (!policy?.latestVersion || !policy?.minimumVersion) return error("invalid_version_policy", "버전 정책이 올바르지 않습니다.", 502);
+    return json(policy);
   }
   if (request.method !== "GET" && !sameOrigin(request)) return error("invalid_origin", "잘못된 요청 출처입니다.", 403);
   if (request.method === "GET" && path === "/api/media") return listMedia(env, request);

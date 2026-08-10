@@ -18,6 +18,7 @@ MVP 범위는 단일 소유자, 하나의 R2 버킷, 이미지·MP3·MP4, 최근
 - S2: 소유자가 원본과 최적화본을 함께 보관하고 필요에 따라 각각의 URL을 복사합니다.
 - S3: 외부 게시판 방문자가 인증 없이 `/media/*` 파일을 표시하거나 재생합니다.
 - S4: 설치자가 자신의 Cloudflare 계정과 R2 버킷에 앱을 배포합니다.
+- S5: 새 버전이 있으면 일반 업데이트를 안내하고, 최소 지원 버전 미만이면 관리자 기능의 업그레이드를 요구합니다.
 
 ## 2. 입력 / 출력
 
@@ -70,6 +71,7 @@ MVP 범위는 단일 소유자, 하나의 R2 버킷, 이미지·MP3·MP4, 최근
 - `POST /api/media/upload`: multipart 업로드
 - `POST /api/media/delete`: 같은 group의 최대 4개 객체 삭제
 - `GET|HEAD /media/:key`: 공개 객체 응답, ETag·immutable cache·byte range 지원
+- 중앙 설치기 `GET|HEAD /version.json`: 최신·최소 지원 버전과 설치기 URL, CORS 공개
 
 업로더는 드래그앤드롭, 파일 선택, 클립보드 붙여넣기와 다중 파일 업로드를
 지원합니다. 최적화본이 있으면 그것을 기본 링크로 사용합니다.
@@ -94,6 +96,7 @@ MVP 범위는 단일 소유자, 하나의 R2 버킷, 이미지·MP3·MP4, 최근
 - UI에는 `noindex`; 공개 객체는 1년 immutable cache를 사용합니다.
 - `DEV_AUTH_BYPASS`는 loopback hostname에서만 효력이 있습니다.
 - 중앙 설치기의 OAuth 토큰은 만료되는 설치 세션에만 보관하고 설치 완료 후 폐기합니다.
+- 버전 확인 요청은 인증 정보와 사용자·계정 식별자를 전송하지 않습니다.
 
 Access 정책이 실수로 빠져도 Worker의 JWT 검증이 관리 화면과 API를 한 번 더
 차단합니다. 반대로 `/media/*` Bypass 정책을 만들지 않으면 외부 게시판의 미디어
@@ -123,6 +126,10 @@ idempotent하게 수행합니다.
 5. `workers.dev`와 커스텀 도메인의 전체 애플리케이션에 설치자 이메일 Allow 정책 생성
 6. 각 주소의 더 구체적인 `/media/*`에 Everyone Bypass 정책 생성
 7. Worker의 `TEAM_DOMAIN`과 복수 `POLICY_AUD` secret 설정
+
+중앙 버전 정책의 `latestVersion`보다 설치 버전이 낮으면 일반 업데이트 배너를 표시합니다.
+`minimumVersion`보다 낮으면 관리자 업로드·삭제 UI를 차단하지만 `/media/*` 응답은 차단하지
+않습니다. 정책 조회 실패는 fail-open으로 처리합니다.
 
 사용자는 Cloudflare 계정과 권한을 확인한 뒤 설치만 실행합니다. 일부 단계가 실패해도
 같은 계정과 리소스 이름으로 재실행할 수 있습니다. 중앙 설치기 소스는 저장소의

@@ -25,6 +25,25 @@ function page(content, status = 200) {
   return new Response(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>R2Beam 설치</title><style>:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,sans-serif;--bg:#0a0c0f;--panel:#12151a;--line:#2a3038;--muted:#98a1ae;--accent:#d7ff64}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 10% 0%,#20281b 0,transparent 35%),var(--bg);color:#f6f8fa}main{width:min(900px,calc(100% - 32px));padding:52px 0}.brand{color:var(--accent);font-size:12px;font-weight:850;letter-spacing:.15em}h1{margin:42px 0 14px;font-size:clamp(34px,7vw,54px);line-height:1.05;letter-spacing:-.055em}.hero-title{font-size:clamp(22px,6vw,46px);white-space:nowrap}p{color:var(--muted);line-height:1.7}@media(min-width:940px){.lead{white-space:nowrap}}.card{margin-top:34px;padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}.card-title{margin:0 0 16px;color:#f6f8fa;font-size:14px;font-weight:800}.features{display:grid;gap:10px;margin:0 0 20px;padding:0;list-style:none;color:var(--muted);font-size:14px;line-height:1.5}.features li{display:flex;gap:9px}.features li::before{content:'✓';color:var(--accent);font-weight:900}.flow{margin:0;font-size:13px}.r2-note,.upgrade-note{margin:18px 0 0;padding:14px 16px;border:1px solid #3a4328;border-radius:11px;background:#151a11;font-size:13px}.r2-note strong,.upgrade-note strong{color:#f6f8fa}.upgrade-note{border-color:#53652d;background:#18200f}.text-link{color:var(--accent);font-weight:750}label{display:grid;gap:7px;margin:14px 0;font-size:13px;font-weight:750}label small{color:var(--muted);font-size:11px;font-weight:500;line-height:1.5}select,input{width:100%;padding:13px;border:1px solid #38404a;border-radius:10px;background:#0c0f12;color:white;font:inherit}.account-picker{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-top:28px}.account-picker label{margin:0}.account-picker button{width:auto;margin:0}.existing-values{display:grid;gap:10px;margin:18px 0;padding:15px;border:1px solid var(--line);border-radius:11px}.existing-values div{display:grid;grid-template-columns:130px 1fr;gap:12px;font-size:13px}.existing-values dt{color:var(--muted)}.existing-values dd{margin:0;overflow-wrap:anywhere}button,.button{display:inline-flex;justify-content:center;width:100%;margin-top:14px;padding:14px;border:0;border-radius:11px;background:var(--accent);color:#10130a;text-decoration:none;font-weight:800;cursor:pointer}.button.secondary{border:1px solid #46505c;background:#1b2026;color:#f6f8fa}.retry-form{margin:0}.meta{font-size:12px}.repo{margin:26px 0 0;text-align:center;font-size:12px}.repo a{color:var(--muted);text-decoration:none}.repo a:hover{color:var(--accent)}@media(max-width:600px){.account-picker{grid-template-columns:1fr}.account-picker button{width:100%}.existing-values div{grid-template-columns:1fr;gap:3px}}</style></head><body><main><p class="brand">◆ R2BEAM</p>${content}</main></body></html>`, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" } });
 }
 
+function versionPolicy(env, method = "GET") {
+  const latestVersion = String(env.R2BEAM_VERSION || "0.1.3");
+  const minimumVersion = String(env.R2BEAM_MINIMUM_VERSION || latestVersion);
+  const body = JSON.stringify({
+    schemaVersion: 1,
+    latestVersion,
+    minimumVersion,
+    installerUrl: "https://r2beam.xguru.net/"
+  });
+  return new Response(method === "HEAD" ? null : body, {
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "public, max-age=300",
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "GET, HEAD"
+    }
+  });
+}
+
 export function isR2NotEnabledError(error) {
   return Number(error?.code) === 10042 || /Please enable R2 through the Cloudflare Dashboard/i.test(String(error?.message || ""));
 }
@@ -116,7 +135,7 @@ async function configuration(env, request) {
   const accountId = account.id;
   const suffix = accountId.slice(0, 6);
   const existing = await findExistingR2Beam({ accessToken: session.accessToken, accountId });
-  const targetVersion = env.R2BEAM_VERSION || "0.1.2";
+  const targetVersion = env.R2BEAM_VERSION || "0.1.3";
   const options = session.accounts.map((item) => `<option value="${escapeHtml(item.id)}"${item.id === accountId ? " selected" : ""}>${escapeHtml(item.name)}</option>`).join("");
   const accountPicker = session.accounts.length > 1
     ? `<form class="account-picker" method="get" action="/configure"><label>Cloudflare 계정<select name="accountId">${options}</select></label><button type="submit">계정 확인</button></form>`
@@ -125,9 +144,9 @@ async function configuration(env, request) {
   const zoneOptions = accountZones.map((zone) => `<option value="r2beam.${escapeHtml(zone.name)}"></option>`).join("");
   const zoneNames = accountZones.map((zone) => escapeHtml(zone.name)).join(", ");
   const fields = existing
-    ? `<input type="hidden" name="workerName" value="${escapeHtml(existing.workerName)}"><input type="hidden" name="bucketName" value="${escapeHtml(existing.bucketName)}"><input type="hidden" name="customHostname" value="${escapeHtml(existing.customHostname)}"><input type="hidden" name="operation" value="upgrade"><p class="upgrade-note"><strong>기존 R2Beam을 찾았습니다.</strong><br>${existing.version ? `v${escapeHtml(existing.version)}에서 ` : ""}v${escapeHtml(targetVersion)}로 업그레이드합니다. 저장된 미디어와 공개 링크는 그대로 유지됩니다.</p><dl class="existing-values"><div><dt>Worker</dt><dd>${escapeHtml(existing.workerName)}</dd></div><div><dt>R2 버킷</dt><dd>${escapeHtml(existing.bucketName)}</dd></div><div><dt>커스텀 도메인</dt><dd>${escapeHtml(existing.customHostname || "사용하지 않음")}</dd></div></dl>`
+    ? `<input type="hidden" name="workerName" value="${escapeHtml(existing.workerName)}"><input type="hidden" name="bucketName" value="${escapeHtml(existing.bucketName)}"><input type="hidden" name="customHostname" value="${escapeHtml(existing.customHostname)}"><input type="hidden" name="operation" value="upgrade"><p class="upgrade-note"><strong>기존 R2Beam을 찾았습니다.</strong><br>${existing.version ? `현재 v${escapeHtml(existing.version)}입니다. ` : ""}v${escapeHtml(targetVersion)} 업그레이드를 진행합니다. 저장된 미디어와 공개 링크는 그대로 유지됩니다.</p><dl class="existing-values"><div><dt>Worker</dt><dd>${escapeHtml(existing.workerName)}</dd></div><div><dt>R2 버킷</dt><dd>${escapeHtml(existing.bucketName)}</dd></div><div><dt>커스텀 도메인</dt><dd>${escapeHtml(existing.customHostname || "사용하지 않음")}</dd></div></dl>`
     : `<input type="hidden" name="operation" value="install"><label>Worker 이름<input name="workerName" value="r2beam-${suffix}" required></label><label>R2 버킷 이름<input name="bucketName" value="r2beam-media-${suffix}" required></label><label>커스텀 도메인 <small>선택 사항</small><input name="customHostname" list="zone-suggestions" placeholder="vault.example.com"><small>비워두면 workers.dev 주소를 사용합니다.${zoneNames ? ` 사용 가능한 Zone: ${zoneNames}` : " 현재 계정에서 활성 Zone을 찾지 못했습니다."}</small></label><datalist id="zone-suggestions">${zoneOptions}</datalist><p class="r2-note"><strong>새 Cloudflare 계정인가요?</strong> R2는 무료 월간 사용량을 제공하지만 최초 한 번 구독 활성화가 필요합니다. <a class="text-link" href="${R2_OVERVIEW_URL}" target="_blank" rel="noopener noreferrer">R2 활성화하기 ↗</a></p>`;
-  const action = existing ? `R2Beam ${escapeHtml(targetVersion)}로 업그레이드` : "이 계정에 설치";
+  const action = existing ? `R2Beam ${escapeHtml(targetVersion)} 업그레이드` : "이 계정에 설치";
   return page(`<h1>R2Beam을<br>${existing ? "업그레이드" : "설치"}하세요.</h1><p>미디어는 선택한 Cloudflare 계정의 R2에 저장됩니다.</p>${accountPicker}<form class="card" method="post" action="/install"><input type="hidden" name="accountId" value="${escapeHtml(accountId)}">${fields}<p class="meta">Cloudflare 계정: ${escapeHtml(account.name)} · 관리자: ${escapeHtml(session.email)}</p><button>${action}</button></form>`);
 }
 
@@ -165,6 +184,7 @@ export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
     try {
+      if ((request.method === "GET" || request.method === "HEAD") && path === "/version.json") return versionPolicy(env, request.method);
       if (request.method === "GET" && path === "/") {
         const action = env.OAUTH_CLIENT_ID && env.OAUTH_CLIENT_SECRET
           ? `<a class="button" href="/oauth/start">Cloudflare로 설치</a>`

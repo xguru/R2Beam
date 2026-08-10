@@ -50,8 +50,31 @@ test("does not expose the removed setup routes", async () => {
 test("reports the installed R2Beam version", async () => {
   const response = await worker.fetch(new Request("http://localhost:8787/api/media/me"), {
     DEV_AUTH_BYPASS: "true",
-    R2BEAM_VERSION: "0.1.2"
+    R2BEAM_VERSION: "0.1.3"
   });
   assert.equal(response.status, 200);
-  assert.equal((await response.json()).version, "0.1.2");
+  assert.equal((await response.json()).version, "0.1.3");
+});
+
+test("checks the central version policy without forwarding user data", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    assert.equal(url, "https://r2beam.xguru.net/version.json");
+    const headers = new Headers(init.headers);
+    assert.equal(headers.get("authorization"), null);
+    assert.equal(headers.get("cf-access-jwt-assertion"), null);
+    assert.equal(headers.get("accept"), "application/json");
+    return Response.json({ latestVersion: "0.1.4", minimumVersion: "0.1.3", installerUrl: "https://r2beam.xguru.net/" });
+  };
+  try {
+    const response = await worker.fetch(new Request("http://localhost:8787/api/media/version"), { DEV_AUTH_BYPASS: "true" });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      latestVersion: "0.1.4",
+      minimumVersion: "0.1.3",
+      installerUrl: "https://r2beam.xguru.net/"
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

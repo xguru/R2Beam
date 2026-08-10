@@ -1,8 +1,10 @@
+import { UPDATE_POLICY_URL, updateStatus } from "./version.js";
+
 const IMAGE_MAX_LONG_EDGE = 960;
 const IMAGE_WEBP_QUALITY = 0.78;
 const FFMPEG_BASE_URL = "/vendor/ffmpeg";
 const STORAGE_MODE_KEY = "media-vault-storage-mode";
-const state = { cursor: null, items: [], busy: false, ffmpegProgressLabel: "" };
+const state = { cursor: null, items: [], busy: false, ffmpegProgressLabel: "", updateRequired: false };
 const $ = (selector) => document.querySelector(selector);
 
 async function api(path, options = {}) {
@@ -26,6 +28,43 @@ function toast(message) {
 
 function setProgress(message) {
   $("#progress").textContent = message;
+}
+
+function showUpdateNotice(status, policy) {
+  const installerUrl = String(policy.installerUrl || "https://r2beam.xguru.net/");
+  if (status === "required") {
+    state.updateRequired = true;
+    $("#required-update-version").textContent = `R2Beam ${policy.latestVersion}`;
+    $("#required-update-link").href = installerUrl;
+    $("#required-update").hidden = false;
+    document.body.classList.add("update-required");
+    return;
+  }
+  if (status === "available") {
+    $("#update-notice-version").textContent = `R2Beam ${policy.latestVersion}`;
+    $("#update-notice-link").href = installerUrl;
+    $("#update-notice").hidden = false;
+  }
+}
+
+async function checkForUpdates(currentVersion) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
+  try {
+    const response = await fetch(UPDATE_POLICY_URL, {
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: controller.signal
+    });
+    if (!response.ok) return;
+    const policy = await response.json();
+    const status = updateStatus(currentVersion, policy);
+    if (status === "available" || status === "required") showUpdateNotice(status, policy);
+  } catch {
+    // Version checks are advisory and must never prevent the vault from loading.
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function formatBytes(bytes) {
@@ -422,6 +461,7 @@ async function uploadVariant({ file, variant }, groupId, originalName, label) {
 }
 
 async function uploadFiles(files) {
+  if (state.updateRequired) return toast("R2Beam을 업그레이드한 뒤 업로드해 주세요.");
   const mediaFiles = [...files].filter(supportedMediaFile);
   if (!mediaFiles.length || state.busy) return;
   state.busy = true;
@@ -459,6 +499,7 @@ async function uploadFiles(files) {
 }
 
 async function removeMediaGroup(group) {
+  if (state.updateRequired) return toast("R2Beam을 업그레이드한 뒤 삭제해 주세요.");
   if (!confirm(`“${group.primary.originalName}” 파일을 삭제할까요?\n원본과 게시판용 파일이 모두 삭제되며 외부 링크도 깨집니다.`)) return;
   const keys = group.items.map((item) => item.key);
   try {
@@ -490,6 +531,7 @@ async function boot() {
   if (!me.authenticated) return location.replace("/");
   $("#user-email").textContent = me.user.email;
   $("#app-version").textContent = `R2Beam v${me.version || "dev"}`;
+  void checkForUpdates(me.version);
   initializeStorageMode();
   await loadMedia();
 }
