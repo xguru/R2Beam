@@ -23,7 +23,7 @@ MVP 범위는 단일 소유자, 하나의 R2 버킷, 이미지·MP3·MP4, 최근
 
 ### 2.1 입력
 
-- 이미지: JPEG, PNG, GIF, WebP, AVIF, 최대 10MB
+- 이미지: JPEG, PNG, GIF, WebP, AVIF, HEIC, HEIF, 최대 10MB
 - 오디오: MP3, 최대 25MB
 - 영상: MP4, 최대 90MB
 - 인증: Cloudflare Access의 `TEAM_DOMAIN`, 애플리케이션 `POLICY_AUD`, RS256 JWT
@@ -49,6 +49,7 @@ MVP 범위는 단일 소유자, 하나의 R2 버킷, 이미지·MP3·MP4, 최근
 - EXIF 방향을 픽셀에 반영하고 재인코딩으로 메타데이터 제거
 - 9:16 입력은 최대 540×960
 - 움직이는 GIF/WebP/AVIF는 애니메이션 보존을 위해 원본 저장
+- HEIC/HEIF는 브라우저 네이티브 디코딩을 우선하며, 미지원 환경에서는 원본 저장만 지원
 
 ### 영상
 

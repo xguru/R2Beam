@@ -116,7 +116,7 @@ async function configuration(env, request) {
   const accountId = account.id;
   const suffix = accountId.slice(0, 6);
   const existing = await findExistingR2Beam({ accessToken: session.accessToken, accountId });
-  const targetVersion = env.R2BEAM_VERSION || "0.1.1";
+  const targetVersion = env.R2BEAM_VERSION || "0.1.2";
   const options = session.accounts.map((item) => `<option value="${escapeHtml(item.id)}"${item.id === accountId ? " selected" : ""}>${escapeHtml(item.name)}</option>`).join("");
   const accountPicker = session.accounts.length > 1
     ? `<form class="account-picker" method="get" action="/configure"><label>Cloudflare 계정<select name="accountId">${options}</select></label><button type="submit">계정 확인</button></form>`
@@ -125,9 +125,9 @@ async function configuration(env, request) {
   const zoneOptions = accountZones.map((zone) => `<option value="r2beam.${escapeHtml(zone.name)}"></option>`).join("");
   const zoneNames = accountZones.map((zone) => escapeHtml(zone.name)).join(", ");
   const fields = existing
-    ? `<input type="hidden" name="workerName" value="${escapeHtml(existing.workerName)}"><input type="hidden" name="bucketName" value="${escapeHtml(existing.bucketName)}"><input type="hidden" name="customHostname" value="${escapeHtml(existing.customHostname)}"><input type="hidden" name="operation" value="upgrade"><p class="upgrade-note"><strong>기존 R2Beam을 찾았습니다.</strong><br>${existing.version ? `v${escapeHtml(existing.version)}에서 ` : ""}v${escapeHtml(targetVersion)}으로 업그레이드합니다. 저장된 미디어와 공개 링크는 그대로 유지됩니다.</p><dl class="existing-values"><div><dt>Worker</dt><dd>${escapeHtml(existing.workerName)}</dd></div><div><dt>R2 버킷</dt><dd>${escapeHtml(existing.bucketName)}</dd></div><div><dt>커스텀 도메인</dt><dd>${escapeHtml(existing.customHostname || "사용하지 않음")}</dd></div></dl>`
+    ? `<input type="hidden" name="workerName" value="${escapeHtml(existing.workerName)}"><input type="hidden" name="bucketName" value="${escapeHtml(existing.bucketName)}"><input type="hidden" name="customHostname" value="${escapeHtml(existing.customHostname)}"><input type="hidden" name="operation" value="upgrade"><p class="upgrade-note"><strong>기존 R2Beam을 찾았습니다.</strong><br>${existing.version ? `v${escapeHtml(existing.version)}에서 ` : ""}v${escapeHtml(targetVersion)}로 업그레이드합니다. 저장된 미디어와 공개 링크는 그대로 유지됩니다.</p><dl class="existing-values"><div><dt>Worker</dt><dd>${escapeHtml(existing.workerName)}</dd></div><div><dt>R2 버킷</dt><dd>${escapeHtml(existing.bucketName)}</dd></div><div><dt>커스텀 도메인</dt><dd>${escapeHtml(existing.customHostname || "사용하지 않음")}</dd></div></dl>`
     : `<input type="hidden" name="operation" value="install"><label>Worker 이름<input name="workerName" value="r2beam-${suffix}" required></label><label>R2 버킷 이름<input name="bucketName" value="r2beam-media-${suffix}" required></label><label>커스텀 도메인 <small>선택 사항</small><input name="customHostname" list="zone-suggestions" placeholder="vault.example.com"><small>비워두면 workers.dev 주소를 사용합니다.${zoneNames ? ` 사용 가능한 Zone: ${zoneNames}` : " 현재 계정에서 활성 Zone을 찾지 못했습니다."}</small></label><datalist id="zone-suggestions">${zoneOptions}</datalist><p class="r2-note"><strong>새 Cloudflare 계정인가요?</strong> R2는 무료 월간 사용량을 제공하지만 최초 한 번 구독 활성화가 필요합니다. <a class="text-link" href="${R2_OVERVIEW_URL}" target="_blank" rel="noopener noreferrer">R2 활성화하기 ↗</a></p>`;
-  const action = existing ? `R2Beam ${escapeHtml(targetVersion)}으로 업그레이드` : "이 계정에 설치";
+  const action = existing ? `R2Beam ${escapeHtml(targetVersion)}로 업그레이드` : "이 계정에 설치";
   return page(`<h1>R2Beam을<br>${existing ? "업그레이드" : "설치"}하세요.</h1><p>미디어는 선택한 Cloudflare 계정의 R2에 저장됩니다.</p>${accountPicker}<form class="card" method="post" action="/install"><input type="hidden" name="accountId" value="${escapeHtml(accountId)}">${fields}<p class="meta">Cloudflare 계정: ${escapeHtml(account.name)} · 관리자: ${escapeHtml(session.email)}</p><button>${action}</button></form>`);
 }
 

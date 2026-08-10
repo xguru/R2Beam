@@ -13,9 +13,12 @@ R2Beam은 자신의 Cloudflare 계정에 설치하는 개인 미디어 저장소
 - 관리자 화면과 API는 Cloudflare Access 로그인으로 보호
 - 생성된 `/media/*` 링크만 공개
 - 원본만 / 최적화본만 / 둘 다 보관 선택
-- 이미지: WebP 품질 78 우선, 미지원 브라우저는 JPEG/PNG 폴백, 긴 변 960px, 확대·크롭 없음, 방향 반영 및 메타데이터 제거
+- 이미지: JPEG, PNG, GIF, WebP, AVIF, HEIC/HEIF 입력, WebP 품질 78 우선, 미지원 브라우저는 JPEG/PNG 폴백, 긴 변 960px, 확대·크롭 없음, 방향 반영 및 메타데이터 제거
 - 영상: H.264 MP4, 긴 변 960px, 최대 30fps, CRF 29, AAC 96kbps, Fast Start
 - 영상 재생을 위한 HTTP Range 요청 지원
+
+HEIC/HEIF는 Safari 17 이상처럼 브라우저가 해당 형식을 디코딩할 수 있을 때 게시판용
+WebP/JPEG로 변환됩니다. 디코딩 미지원 환경에서도 **원본만** 저장할 수 있습니다.
 
 ## 설치
 

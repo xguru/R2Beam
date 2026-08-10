@@ -53,8 +53,8 @@ async function uploadMedia(env, request) {
   const form = await request.formData();
   const file = form.get("file");
   if (!file || typeof file.stream !== "function") return error("missing_file", "업로드할 미디어 파일이 필요합니다.", 400);
-  const detected = detectMediaType(new Uint8Array(await file.slice(0, 32).arrayBuffer()));
-  if (!detected) return error("unsupported_media", "JPG, PNG, GIF, WebP, AVIF, MP3, MP4 파일만 업로드할 수 있습니다.", 415);
+  const detected = detectMediaType(new Uint8Array(await file.slice(0, 64).arrayBuffer()));
+  if (!detected) return error("unsupported_media", "JPG, PNG, GIF, WebP, AVIF, HEIC, HEIF, MP3, MP4 파일만 업로드할 수 있습니다.", 415);
   if (file.size <= 0 || file.size > maxBytes(detected.kind)) return error("file_too_large", "파일 크기 제한을 초과했습니다.", 413);
 
   const requestedGroupId = String(form.get("groupId") || "");

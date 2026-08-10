@@ -57,8 +57,8 @@ function itemKind(item) {
 function supportedMediaFile(file) {
   const type = String(file.type || "").toLowerCase();
   const name = String(file.name || "").toLowerCase();
-  return ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "audio/mpeg", "video/mp4"].includes(type)
-    || /\.(?:jpe?g|png|gif|webp|avif|mp3|mp4)$/.test(name);
+  return ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif", "image/heic", "image/heif", "audio/mpeg", "video/mp4"].includes(type)
+    || /\.(?:jpe?g|png|gif|webp|avif|heic|heif|mp3|mp4)$/.test(name);
 }
 
 function targetImageSize(width, height) {

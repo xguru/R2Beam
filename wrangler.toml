@@ -14,7 +14,7 @@ binding = "MEDIA"
 bucket_name = "r2beam-media"
 
 [vars]
-R2BEAM_VERSION = "0.1.1"
+R2BEAM_VERSION = "0.1.2"
 
 [observability]
 enabled = true

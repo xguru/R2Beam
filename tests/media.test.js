@@ -4,6 +4,8 @@ import { detectMediaType, normalizeMediaVariant, parseByteRange, validMediaKey }
 
 test("detects supported signatures instead of trusting extensions", () => {
   assert.deepEqual(detectMediaType(Uint8Array.from([0xff, 0xd8, 0xff, 0x00])), { kind: "image", contentType: "image/jpeg", extension: "jpg" });
+  assert.deepEqual(detectMediaType(Uint8Array.from([0, 0, 0, 24, 102, 116, 121, 112, 104, 101, 105, 99, 0, 0, 0, 0])), { kind: "image", contentType: "image/heic", extension: "heic" });
+  assert.deepEqual(detectMediaType(Uint8Array.from([0, 0, 0, 24, 102, 116, 121, 112, 109, 105, 102, 49, 0, 0, 0, 0])), { kind: "image", contentType: "image/heif", extension: "heif" });
   assert.deepEqual(detectMediaType(Uint8Array.from([0x49, 0x44, 0x33, 0x04])), { kind: "audio", contentType: "audio/mpeg", extension: "mp3" });
   assert.equal(detectMediaType(Uint8Array.from([1, 2, 3, 4])), null);
 });
@@ -15,6 +17,7 @@ test("normalizes media variants", () => {
 
 test("accepts generated object keys and rejects traversal", () => {
   assert.equal(validMediaKey("image/2026/08/05-82e04ffc-5400-4c5b-96c1-b7c008d34fc0-optimized.webp"), true);
+  assert.equal(validMediaKey("image/2026/08/05-82e04ffc-5400-4c5b-96c1-b7c008d34fc0-original.heic"), true);
   assert.equal(validMediaKey("../secret"), false);
 });
 

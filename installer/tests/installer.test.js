@@ -4,7 +4,7 @@ import worker, { customDomainFor, isR2NotEnabledError } from "../src/index.js";
 import { CloudflareError } from "../src/cloudflare.js";
 
 test("renders the public installer landing page", async () => {
-  const response = await worker.fetch(new Request("https://r2beam.xguru.net/"), { OAUTH_CLIENT_ID: "client", OAUTH_CLIENT_SECRET: "secret", R2BEAM_VERSION: "0.1.1" });
+  const response = await worker.fetch(new Request("https://r2beam.xguru.net/"), { OAUTH_CLIENT_ID: "client", OAUTH_CLIENT_SECRET: "secret", R2BEAM_VERSION: "0.1.2" });
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Cloudflare로 설치/);
@@ -19,7 +19,7 @@ test("renders the public installer landing page", async () => {
   assert.match(html, /R2 활성화하기/);
   assert.match(html, /https:\/\/github\.com\/xguru\/R2Beam/);
   assert.match(html, /GitHub · xguru\/R2Beam/);
-  assert.match(html, /R2Beam v0\.1\.1/);
+  assert.match(html, /R2Beam v0\.1\.2/);
 });
 
 test("recognizes the Cloudflare R2 subscription error", () => {
@@ -39,7 +39,7 @@ test("reuses an existing installation and renders an upgrade notice", async () =
         : path.endsWith("/workers/scripts/r2beam-86728b/settings")
           ? { bindings: [
               { type: "r2_bucket", name: "MEDIA", bucket_name: "r2beam-media-86728b" },
-              { type: "plain_text", name: "R2BEAM_VERSION", text: "0.1.0" },
+              { type: "plain_text", name: "R2BEAM_VERSION", text: "0.1.1" },
               { type: "secret_text", name: "TEAM_DOMAIN" },
               { type: "secret_text", name: "POLICY_AUD" }
             ] }
@@ -48,7 +48,7 @@ test("reuses an existing installation and renders an upgrade notice", async () =
     return Response.json({ success: true, result, errors: [] });
   };
   const env = {
-    R2BEAM_VERSION: "0.1.1",
+    R2BEAM_VERSION: "0.1.2",
     INSTALL_SESSIONS: {
       async get(key) {
         assert.equal(key, "install:session-id");
@@ -68,12 +68,12 @@ test("reuses an existing installation and renders an upgrade notice", async () =
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.match(html, /기존 R2Beam을 찾았습니다/);
-    assert.match(html, /v0\.1\.0에서 v0\.1\.1으로 업그레이드/);
+    assert.match(html, /v0\.1\.1에서 v0\.1\.2로 업그레이드/);
     assert.match(html, /저장된 미디어와 공개 링크는 그대로 유지됩니다/);
     assert.match(html, /name="workerName" value="r2beam-86728b"/);
     assert.match(html, /name="bucketName" value="r2beam-media-86728b"/);
     assert.match(html, /name="customHostname" value="r2\.example\.com"/);
-    assert.match(html, /R2Beam 0\.1\.1으로 업그레이드/);
+    assert.match(html, /R2Beam 0\.1\.2로 업그레이드/);
   } finally {
     globalThis.fetch = originalFetch;
   }
